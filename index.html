@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniWallet Princess - ระบบบริหารคลังสมบัติและจำลองการเงินสำหรับเจ้าหญิงนักศึกษา 👑</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts: Mali, Prompt & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Mali:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'Inter', 'sans-serif'],
+                        cute: ['Mali', 'Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        princess: {
+                            50: '#fff5f8',
+                            100: '#ffe4ee',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                        },
+                        lavender: {
+                            50: '#faf5ff',
+                            100: '#f3e8ff',
+                            200: '#e9d5ff',
+                            400: '#c084fc',
+                            500: '#a855f7',
+                            600: '#9333ea',
+                        },
+                        champagne: {
+                            50: '#fffbeb',
+                            100: '#fef3c7',
+                            200: '#fde68a',
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #fff5f8 0%, #fdf2f8 35%, #f5f3ff 70%, #fffbeb 100%);
+            background-attachment: fixed;
+            font-family: 'Prompt', 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            position: relative;
+        }
+        /* Subtle Sparkle Pattern Background */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image: 
+                radial-gradient(#f9a8d4 1.2px, transparent 1.2px),
+                radial-gradient(#d8b4fe 1.2px, transparent 1.2px),
+                radial-gradient(#fcd34d 1px, transparent 1px);
+            background-size: 64px 64px, 96px 96px, 48px 48px;
+            background-position: 0 0, 32px 32px, 16px 48px;
+            opacity: 0.35;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Princess Glass Card */
+        .princess-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(251, 207, 232, 0.85);
+            box-shadow: 0 10px 30px -5px rgba(244, 114, 182, 0.12), 0 4px 12px -2px rgba(251, 191, 36, 0.08);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .princess-card:hover {
+            box-shadow: 0 14px 34px -5px rgba(236, 72, 153, 0.18), 0 6px 16px -2px rgba(245, 158, 11, 0.12);
+        }
+
+        /* Floating Sparkle Animation */
+        @keyframes floatSparkle {
+            0%, 100% { transform: translateY(0px) scale(1); opacity: 0.85; }
+            50% { transform: translateY(-5px) scale(1.1); opacity: 1; }
+        }
+        .animate-sparkle {
+            animation: floatSparkle 3s ease-in-out infinite;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #fff1f2;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #f9a8d4;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #f472b6;
+        }
+
+        /* Princess Range Slider Styling */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: linear-gradient(90deg, #fbcfe8 0%, #e9d5ff 50%, #fde68a 100%);
+            height: 0.55rem;
+            border-radius: 999px;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -5px;
+            background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+            border: 2px solid #fff;
+            height: 1.25rem;
+            width: 1.25rem;
+            border-radius: 999px;
+            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.45);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.18);
+        }
+    </style>
+</head>
+<body class="text-slate-700 antialiased pb-20 md:pb-10">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-white/85 backdrop-blur-md sticky top-0 z-30 border-b-2 border-pink-100 shadow-sm shadow-pink-100/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-pink-400 via-fuchsia-400 to-amber-300 flex items-center justify-center text-white shadow-md shadow-pink-200 border border-white relative">
+                    <span class="text-xl animate-sparkle">👑</span>
+                </div>
+                <div>
+                    <h1 class="font-cute font-bold text-lg sm:text-xl tracking-tight text-slate-800 leading-none flex items-center gap-1.5">
+                        Uni<span class="bg-gradient-to-r from-pink-500 via-purple-500 to-amber-500 bg-clip-text text-transparent">Wallet</span>
+                        <span class="text-xs font-sans font-semibold bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full border border-pink-200">Princess Edition</span>
+                    </h1>
+                    <p class="text-[11px] text-pink-500/90 font-medium mt-1">คลังสมบัติและผู้ช่วยวางแผนการเงินสำหรับเจ้าหญิงนักศึกษา ✨</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Current Date Badge -->
+                <div class="hidden sm:flex items-center gap-2 bg-pink-50/90 border border-pink-200/80 px-3.5 py-1.5 rounded-2xl text-xs font-medium text-pink-700">
+                    <span>🏰</span>
+                    <span id="header-date-display">วันที่ -- / --</span>
+                </div>
+
+                <!-- Settings Modal Button -->
+                <button onclick="openSettingsModal()" class="flex items-center gap-1.5 bg-gradient-to-r from-pink-100 to-purple-100 hover:from-pink-200 hover:to-purple-200 text-pink-700 border border-pink-200 px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-semibold shadow-sm transition active:scale-95">
+                    <span>🪄</span>
+                    <span class="hidden sm:inline">ตั้งค่าคลังสมบัติ</span>
+                </button>
+
+                <!-- Reset Demo Data Button -->
+                <button onclick="openResetModal()" title="รีเซ็ตข้อมูลตัวอย่าง" class="p-2.5 text-pink-400 hover:text-rose-600 hover:bg-pink-50 border border-transparent hover:border-pink-200 rounded-2xl transition active:scale-95">
+                    <i class="fa-solid fa-rotate-right"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
+
+        <!-- Section 1: Royal Treasury Dashboard -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            
+            <!-- Hero Card: Dynamic Daily Allowance -->
+            <div class="lg:col-span-5 bg-gradient-to-br from-pink-400 via-fuchsia-500 to-purple-500 rounded-3xl p-6 text-white shadow-xl shadow-pink-200/80 border-2 border-amber-200/70 relative overflow-hidden flex flex-col justify-between">
+                <!-- Decorative Crown & Sparkles -->
+                <div class="absolute -right-6 -top-6 w-40 h-40 rounded-full bg-amber-200/20 blur-xl pointer-events-none"></div>
+                <div class="absolute -left-10 -bottom-10 w-36 h-36 rounded-full bg-pink-200/25 blur-lg pointer-events-none"></div>
+                <div class="absolute right-5 top-14 text-3xl opacity-25 pointer-events-none select-none">🏰</div>
+
+                <div>
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-sm border border-white/30 px-3 py-1 rounded-full text-xs font-semibold text-white shadow-sm">
+                            <span>👑</span> เบี้ยเลี้ยงเจ้าหญิงที่ใช้ได้วันนี้
+                        </span>
+                        <span id="days-left-badge" class="text-xs font-medium text-pink-50 bg-black/15 border border-white/15 px-2.5 py-1 rounded-xl">
+                            เหลือ -- วันในเดือนนี้
+                        </span>
+                    </div>
+
+                    <div class="mt-4 flex items-baseline gap-2">
+                        <span class="font-cute text-4xl sm:text-5xl font-bold tracking-tight drop-shadow-sm" id="daily-allowance-amount">฿0</span>
+                        <span class="text-sm text-pink-100 font-medium">/ วัน ✨</span>
+                    </div>
+
+                    <!-- Today's Spent Progress -->
+                    <div class="mt-4 bg-white/15 border border-white/25 rounded-2xl p-3.5 backdrop-blur-sm">
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <span class="text-pink-50">ใช้ไปแล้ววันนี้: <strong id="today-spent-text" class="text-white">฿0</strong></span>
+                            <span id="today-status-text" class="text-amber-200 font-semibold">ยังอยู่ในงบเจ้าหญิง 💖</span>
+                        </div>
+                        <div class="w-full bg-black/15 rounded-full h-2.5 overflow-hidden p-0.5">
+                            <div id="today-progress-bar" class="bg-amber-300 h-1.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward Chest (หีบสมบัติโบนัส) -->
+                <div class="mt-5 pt-4 border-t border-white/20 flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-200 to-amber-400 border border-white/70 flex items-center justify-center text-xl shadow-md">
+                            💎
+                        </div>
+                        <div>
+                            <p class="text-xs text-pink-100 font-medium">หีบสมบัติโบนัส (วันประหยัด)</p>
+                            <p class="font-cute font-bold text-lg text-amber-200 drop-shadow-sm" id="reward-pot-amount">฿0</p>
+                        </div>
+                    </div>
+                    <span class="text-[11px] text-pink-100 max-w-[140px] text-right leading-tight">
+                        สะสมไว้ช้อปปิ้งให้รางวัลตัวเองช่วงสุดสัปดาห์ 🎀
+                    </span>
+                </div>
+            </div>
+
+            <!-- Right Side of Dashboard: 4 Mini Stat Cards + Royal Finance Fairy -->
+            <div class="lg:col-span-7 flex flex-col justify-between gap-4">
+                
+                <!-- 4 Stat Cards Grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                    <!-- Total Balance -->
+                    <div class="princess-card p-4 rounded-2xl">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-pink-700">คลังสมบัติคงเหลือ</span>
+                            <span class="w-8 h-8 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center text-sm">
+                                👑
+                            </span>
+                        </div>
+                        <p class="font-cute text-lg sm:text-xl font-bold text-slate-800" id="stat-net-balance">฿0</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">รายรับหักรายจ่ายทั้งหมด</p>
+                    </div>
+
+                    <!-- Total Income -->
+                    <div class="princess-card p-4 rounded-2xl">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-purple-700">เบี้ยเลี้ยงเดือนนี้</span>
+                            <span class="w-8 h-8 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-sm">
+                                ✨
+                            </span>
+                        </div>
+                        <p class="font-cute text-lg sm:text-xl font-bold text-purple-600" id="stat-total-income">฿0</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">งบตั้งต้น + รายได้พิเศษ</p>
+                    </div>
+
+                    <!-- Total Expense -->
+                    <div class="princess-card p-4 rounded-2xl">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-rose-700">รายจ่ายรวม</span>
+                            <span class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-sm">
+                                🛍️
+                            </span>
+                        </div>
+                        <p class="font-cute text-lg sm:text-xl font-bold text-rose-500" id="stat-total-expense">฿0</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5" id="stat-expense-breakdown">คงที่ ฿0 | ทั่วไป ฿0</p>
+                    </div>
+
+                    <!-- Savings Goal -->
+                    <div class="princess-card p-4 rounded-2xl">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-amber-700">เป้าหมายออมเพชร</span>
+                            <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
+                                💎
+                            </span>
+                        </div>
+                        <p class="font-cute text-lg sm:text-xl font-bold text-amber-500" id="stat-savings-goal">฿0</p>
+                        <p class="text-[11px] text-slate-400 mt-0.5">กันเก็บไว้ในหีบก่อนใช้</p>
+                    </div>
+                </div>
+
+                <!-- Financial Health Score & Royal Finance Fairy Card -->
+                <div class="princess-card rounded-3xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-gradient-to-r from-white/95 via-pink-50/60 to-purple-50/60">
+                    <!-- Circular Score Gauge -->
+                    <div class="flex items-center gap-4 shrink-0">
+                        <div class="relative w-20 h-20 flex items-center justify-center">
+                            <svg class="w-20 h-20 transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-pink-100" stroke-width="3.5" stroke="currentColor" fill="none"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="health-score-ring" class="text-pink-500 transition-all duration-700" stroke-dasharray="75, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span id="health-score-value" class="font-cute text-xl font-bold text-slate-800 leading-none">82</span>
+                                <span class="text-[10px] text-pink-500 font-semibold">/ 100 💖</span>
+                            </div>
+                        </div>
+                        <div class="sm:hidden">
+                            <span id="health-level-badge-mobile" class="inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-pink-100 text-pink-700">
+                                เจ้าหญิงนักออมผู้ชาญฉลาด
+                            </span>
+                            <h3 class="font-bold text-slate-800 text-sm mt-1">นางฟ้าที่ปรึกษาการเงิน 🧚‍♀️</h3>
+                        </div>
+                    </div>
+
+                    <!-- Royal Finance Fairy Advice -->
+                    <div class="flex-1">
+                        <div class="hidden sm:flex items-center gap-2 mb-1.5">
+                            <span class="text-xs font-bold text-pink-600 flex items-center gap-1.5">
+                                <span class="text-base">🧚‍♀️</span> นางฟ้าที่ปรึกษาการเงิน (Royal Finance Fairy)
+                            </span>
+                            <span id="health-level-badge" class="px-3 py-0.5 rounded-full text-xs font-semibold bg-pink-100 text-pink-700 border border-pink-200">
+                                เจ้าหญิงนักออมผู้ชาญฉลาด
+                            </span>
+                        </div>
+                        <p id="ai-buddy-message" class="text-sm text-slate-600 leading-relaxed">
+                            กำลังร่ายเวทมนตร์วิเคราะห์คลังสมบัติของเจ้าหญิง... ✨
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: 3-Second Magic Presets & Logging -->
+        <section class="princess-card rounded-3xl p-5 sm:p-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-pink-100">
+                <div>
+                    <h2 class="font-cute text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <span class="w-9 h-9 rounded-2xl bg-gradient-to-br from-pink-100 to-amber-100 border border-pink-200 flex items-center justify-center text-base">
+                            🪄
+                        </span>
+                        บันทึกเวทมนตร์ด่วน 3 วินาที (One-Tap Magic Presets)
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">แตะปุ่มรายการที่ใช้บ่อยของเจ้าหญิงเพื่อบันทึกเข้าคลังทันทีโดยไม่ต้องพิมพ์ 💖</p>
+                </div>
+
+                <!-- Preset Buttons -->
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="quickAddExpense('ข้าวกลางวันโรงอาหาร', 50, 'food', 'variable')" class="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-medium shadow-sm transition active:scale-95">
+                        <span>🍱 ข้าวกลางวัน</span>
+                        <span class="font-bold text-amber-600">50฿</span>
+                    </button>
+                    <button onclick="quickAddExpense('ชานมไข่มุก / คาเฟ่', 45, 'lifestyle', 'variable')" class="flex items-center gap-2 bg-pink-50 hover:bg-pink-100 text-pink-700 border border-pink-200 px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-medium shadow-sm transition active:scale-95">
+                        <span>🧋 ชานมไข่มุก</span>
+                        <span class="font-bold text-pink-600">45฿</span>
+                    </button>
+                    <button onclick="quickAddExpense('ค่าวินมอเตอร์ไซค์ / รถเมล์', 20, 'transport', 'variable')" class="flex items-center gap-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-medium shadow-sm transition active:scale-95">
+                        <span>🦄 ค่าวิน/เดินทาง</span>
+                        <span class="font-bold text-purple-600">20฿</span>
+                    </button>
+                    <button onclick="quickAddExpense('ค่าชีท / อุปกรณ์การเรียน', 35, 'study', 'variable')" class="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-medium shadow-sm transition active:scale-95">
+                        <span>🎀 ชีท/อุปกรณ์</span>
+                        <span class="font-bold text-rose-600">35฿</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Custom Transaction Form -->
+            <form id="transaction-form" onsubmit="handleAddTransaction(event)" class="pt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                <!-- Transaction Type -->
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-pink-700 mb-1">ประเภทธุรกรรม ✨</label>
+                    <select id="tx-type" onchange="updateCategoryOptions()" class="w-full bg-pink-50/50 border border-pink-200 rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+                        <option value="variable">รายจ่ายทั่วไป (ผันแปร)</option>
+                        <option value="fixed">รายจ่ายคงที่ (หอ/เน็ต)</option>
+                        <option value="income">รายรับ (เบี้ยเลี้ยง/งานเสริม)</option>
+                    </select>
+                </div>
+
+                <!-- Category -->
+                <div class="lg:col-span-3">
+                    <label class="block text-xs font-semibold text-pink-700 mb-1">หมวดหมู่ไลฟ์สไตล์ 🎀</label>
+                    <select id="tx-category" class="w-full bg-pink-50/50 border border-pink-200 rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+                        <option value="food">🍰 ค่าอาหาร & ขนมหวาน</option>
+                        <option value="transport">🦄 ค่าเดินทาง / วิน / รถเมล์</option>
+                        <option value="study">📚 ค่าเรียน / ชีท / เครื่องเขียน</option>
+                        <option value="housing">🏰 ค่าหอพัก / ค่าน้ำไฟ / เน็ต</option>
+                        <option value="lifestyle">💄 ช้อปปิ้ง / สังสรรค์ / บิวตี้</option>
+                        <option value="other">💎 รายรับ / เงินออม / อื่นๆ</option>
+                    </select>
+                </div>
+
+                <!-- Amount -->
+                <div class="lg:col-span-2">
+                    <label class="block text-xs font-semibold text-pink-700 mb-1">จำนวนเงิน (บาท) 💰</label>
+                    <input type="number" id="tx-amount" min="1" step="any" required placeholder="0.00" class="w-full bg-pink-50/50 border border-pink-200 rounded-2xl px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-pink-400">
+                </div>
+
+                <!-- Note -->
+                <div class="lg:col-span-3">
+                    <label class="block text-xs font-semibold text-pink-700 mb-1">รายการ / บันทึกความจำ 💖</label>
+                    <input type="text" id="tx-note" required placeholder="เช่น เค้กสตรอว์เบอร์รี, ค่าเน็ต, สอนพิเศษ" class="w-full bg-pink-50/50 border border-pink-200 rounded-2xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+                </div>
+
+                <!-- Date & Submit -->
+                <div class="lg:col-span-2 flex gap-2">
+                    <div class="w-1/2 lg:w-auto flex-1">
+                        <label class="block text-xs font-semibold text-pink-700 mb-1">วันที่ 📅</label>
+                        <input type="date" id="tx-date" required class="w-full bg-pink-50/50 border border-pink-200 rounded-2xl px-2.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+                    </div>
+                    <button type="submit" class="bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold px-4 py-2.5 rounded-2xl text-sm shadow-md shadow-pink-200 transition active:scale-95 flex items-center justify-center gap-1.5 shrink-0">
+                        <span>✨</span>
+                        <span>บันทึก</span>
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Section 3: End-of-Month Magic Simulator & What-If Analysis -->
+        <section class="princess-card rounded-3xl p-5 sm:p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 bg-purple-100 text-purple-700 border border-purple-200 px-3 py-1 rounded-full text-xs font-semibold mb-1.5">
+                        <span>🔮</span> ห้องจำลองเวทมนตร์สิ้นเดือน (Royal Magic Simulator)
+                    </div>
+                    <h2 class="font-cute text-lg sm:text-xl font-bold text-slate-800">ทำนายอนาคตคลังสมบัติ (What-If Analysis)</h2>
+                    <p class="text-xs sm:text-sm text-slate-500">ลองเลื่อนคทาวิเศษเพื่อปรับพฤติกรรม แล้วดูว่าเจ้าหญิงจะมีสมบัติเหลือในวันสิ้นเดือนเท่าไหร่ ✨</p>
+                </div>
+
+                <!-- Prediction Status Banner -->
+                <div id="sim-prediction-box" class="bg-pink-50 border-2 border-pink-200 rounded-2xl px-4 py-3 text-right shrink-0">
+                    <p class="text-[11px] font-semibold text-pink-600">คำทำนายจากกระจกวิเศษ 🪞</p>
+                    <p id="sim-prediction-text" class="text-sm sm:text-base font-bold text-pink-800 mt-0.5">
+                        สมบัติพอใช้ถึงสิ้นเดือน (เหลือ ฿0)
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                <!-- Left: Sliders Controls -->
+                <div class="lg:col-span-5 space-y-5 bg-gradient-to-br from-pink-50/80 via-purple-50/70 to-amber-50/60 p-5 rounded-3xl border border-pink-200/70">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-cute font-bold text-sm text-pink-800">🪄 ปรับเปลี่ยนพฤติกรรมของเจ้าหญิง</h3>
+                        <button onclick="resetSimulatorSliders()" class="text-xs text-purple-600 hover:underline font-semibold">รีเซ็ตค่าเริ่มต้น</button>
+                    </div>
+
+                    <!-- Slider 1: Reduce Wants / Boba / Shopping per week -->
+                    <div>
+                        <div class="flex justify-between text-xs sm:text-sm mb-1.5">
+                            <span class="text-slate-700 font-medium">🧋 ลดชานม/ช้อปปิ้ง/บิวตี้ต่อสัปดาห์</span>
+                            <span class="font-bold text-pink-600" id="sim-reduce-wants-val">-฿0 / สัปดาห์</span>
+                        </div>
+                        <input type="range" id="sim-reduce-wants" min="0" max="1500" step="50" value="0" oninput="updateSimulator()" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>ไม่ลดเลย (0฿)</span>
+                            <span>ลดปานกลาง (750฿)</span>
+                            <span>เจ้าหญิงสายประหยัด (1,500฿)</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 2: Reduce Food Delivery / Eating Out per week -->
+                    <div>
+                        <div class="flex justify-between text-xs sm:text-sm mb-1.5">
+                            <span class="text-slate-700 font-medium">🍱 ทำอาหารทานเอง / ลดสั่งเดลิเวอรี</span>
+                            <span class="font-bold text-purple-600" id="sim-reduce-food-val">-฿0 / สัปดาห์</span>
+                        </div>
+                        <input type="range" id="sim-reduce-food" min="0" max="1000" step="50" value="0" oninput="updateSimulator()" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>เท่าเดิม (0฿)</span>
+                            <span>ลด 2-3 มื้อ (500฿)</span>
+                            <span>ทำทานเองหลัก (1,000฿)</span>
+                        </div>
+                    </div>
+
+                    <!-- Slider 3: Extra Part-time Income -->
+                    <div>
+                        <div class="flex justify-between text-xs sm:text-sm mb-1.5">
+                            <span class="text-slate-700 font-medium">💎 หารายได้เสริมพิเศษในเดือนนี้</span>
+                            <span class="font-bold text-amber-600" id="sim-extra-income-val">+฿0 / เดือน</span>
+                        </div>
+                        <input type="range" id="sim-extra-income" min="0" max="5000" step="250" value="0" oninput="updateSimulator()" class="w-full">
+                        <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                            <span>0฿</span>
+                            <span>ติวหนังสือ/ฟรีแลนซ์ (+2,500฿)</span>
+                            <span>+5,000฿</span>
+                        </div>
+                    </div>
+
+                    <!-- Simulator Summary Impact -->
+                    <div class="pt-3 border-t border-pink-200/70 flex items-center justify-between">
+                        <span class="text-xs font-medium text-slate-600">สมบัติที่จะงอกเงยเพิ่ม ณ วันสิ้นเดือน:</span>
+                        <span id="sim-gain-amount" class="font-cute text-base font-bold text-emerald-600">+฿0 ✨</span>
+                    </div>
+                </div>
+
+                <!-- Right: Line Chart Comparison -->
+                <div class="lg:col-span-7">
+                    <div class="bg-white/90 border border-pink-100 rounded-3xl p-3 sm:p-4 h-72 sm:h-80 relative shadow-inner">
+                        <canvas id="simulatorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Analytics (Donut Charts) & Transaction History -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left: Analytics Charts (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                <!-- Category Breakdown Donut -->
+                <div class="princess-card rounded-3xl p-5 sm:p-6">
+                    <h3 class="font-cute font-bold text-base text-slate-800 mb-1">🍩 สัดส่วนการใช้จ่ายของเจ้าหญิง</h3>
+                    <p class="text-xs text-slate-500 mb-4">ดูว่าเบี้ยเลี้ยงส่วนใหญ่ในเดือนนี้ถูกใช้ไปกับหมวดไหน</p>
+                    <div class="h-60 relative flex items-center justify-center">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 50/30/20 Needs vs Wants Analysis -->
+                <div class="princess-card rounded-3xl p-5 sm:p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-cute font-bold text-base text-slate-800">⚖️ สมดุลคลังสมบัติ 50/30/20</h3>
+                        <span class="text-xs bg-amber-100 text-amber-700 border border-amber-200 px-2.5 py-0.5 rounded-full font-semibold">กฎทองเจ้าหญิง 👑</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">เปรียบเทียบรายจ่ายจำเป็น (Needs) กับรายจ่ายตามใจ (Wants) และเงินออม (Savings)</p>
+                    
+                    <div class="space-y-3.5">
+                        <!-- Needs -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700">🏰 จำเป็น (Needs) <span class="text-slate-400">(เป้าหมาย ≤ 50%)</span></span>
+                                <span class="font-bold text-purple-700" id="ratio-needs-text">0% (฿0)</span>
+                            </div>
+                            <div class="w-full bg-purple-100/70 rounded-full h-2.5">
+                                <div id="ratio-needs-bar" class="bg-gradient-to-r from-purple-400 to-indigo-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Wants -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700">🎀 ตามใจ/ไลฟ์สไตล์ (Wants) <span class="text-slate-400">(เป้าหมาย ≤ 30%)</span></span>
+                                <span class="font-bold text-pink-600" id="ratio-wants-text">0% (฿0)</span>
+                            </div>
+                            <div class="w-full bg-pink-100/70 rounded-full h-2.5">
+                                <div id="ratio-wants-bar" class="bg-gradient-to-r from-pink-400 to-rose-500 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Savings -->
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="font-medium text-slate-700">💎 ออมเพชร & หีบโบนัส (Savings) <span class="text-slate-400">(เป้าหมาย ≥ 20%)</span></span>
+                                <span class="font-bold text-amber-600" id="ratio-savings-text">0% (฿0)</span>
+                            </div>
+                            <div class="w-full bg-amber-100/70 rounded-full h-2.5">
+                                <div id="ratio-savings-bar" class="bg-gradient-to-r from-amber-400 to-emerald-400 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Transaction History (7 cols) -->
+            <div class="lg:col-span-7 princess-card rounded-3xl p-5 sm:p-6 flex flex-col">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="font-cute font-bold text-base sm:text-lg text-slate-800">📜 บันทึกประวัติคลังสมบัติเดือนนี้</h3>
+                        <p class="text-xs text-slate-500">รายการทั้งหมดจะถูกเก็บรักษาไว้ในปราสาทของคุณอัตโนมัติ ✨</p>
+                    </div>
+
+                    <!-- Filter Buttons -->
+                    <div class="flex items-center gap-1 bg-pink-50 border border-pink-200/70 p-1 rounded-2xl self-start">
+                        <button onclick="setTxFilter('all')" id="filter-all" class="px-3 py-1 rounded-xl text-xs font-semibold bg-white text-pink-700 shadow-sm transition">ทั้งหมด</button>
+                        <button onclick="setTxFilter('variable')" id="filter-variable" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-600 hover:text-pink-700 transition">รายจ่ายทั่วไป</button>
+                        <button onclick="setTxFilter('fixed')" id="filter-fixed" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-600 hover:text-pink-700 transition">รายจ่ายคงที่</button>
+                        <button onclick="setTxFilter('income')" id="filter-income" class="px-3 py-1 rounded-xl text-xs font-medium text-slate-600 hover:text-pink-700 transition">รายรับ</button>
+                    </div>
+                </div>
+
+                <!-- Transaction List Container -->
+                <div id="transaction-list" class="flex-1 overflow-y-auto max-h-[540px] divide-y divide-pink-100/80 pr-1">
+                    <!-- Rendered dynamically via JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal 1: Monthly Budget Settings -->
+    <div id="settings-modal" class="fixed inset-0 bg-pink-950/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border-2 border-pink-200 rounded-3xl max-w-md w-full p-6 shadow-2xl shadow-pink-200/50 transform transition-all">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-cute text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <span>👑</span> ตั้งค่าคลังสมบัติประจำเดือน
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-pink-400 hover:text-pink-600 p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form onsubmit="saveSettings(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-pink-700 mb-1">งบเบี้ยเลี้ยงตั้งต้นต่อเดือน (ค่าขนม / กยศ.) (บาท) ✨</label>
+                    <input type="number" id="setting-base-income" min="0" required class="w-full bg-pink-50/50 border border-pink-200 rounded-2xl px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-pink-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-pink-700 mb-1">เป้าหมายออมเพชรประจำเดือน (หักเก็บก่อนใช้) (บาท) 💎</label>
+                    <input type="number" id="setting-savings-goal" min="0" required class="w-full bg-pink-50/50 border border-pink-200 rounded-2xl px-3.5 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-pink-400">
+                </div>
+                <div class="bg-gradient-to-r from-pink-50 to-purple-50 border border-pink-200/70 p-3.5 rounded-2xl text-xs text-pink-800 leading-relaxed">
+                    🧚‍♀️ นางฟ้าจะนำ <strong>เบี้ยเลี้ยงรวม - รายจ่ายคงที่ - เป้าหมายออมเพชร</strong> มาคำนวณเป็นเบี้ยเลี้ยงรายวันที่เจ้าหญิงใช้ได้จริงในแต่ละวันค่ะ
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeSettingsModal()" class="px-4 py-2 rounded-2xl text-sm font-medium text-slate-600 hover:bg-pink-50">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 rounded-2xl text-sm font-semibold bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white shadow-md shadow-pink-200">บันทึกคลังสมบัติ ✨</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Reset Confirmation -->
+    <div id="reset-modal" class="fixed inset-0 bg-pink-950/40 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white border-2 border-pink-200 rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center">
+            <div class="w-14 h-14 rounded-2xl bg-pink-100 text-pink-600 flex items-center justify-center mx-auto mb-3 text-2xl">
+                🪄
+            </div>
+            <h3 class="font-cute text-lg font-bold text-slate-800">รีเซ็ตข้อมูลคลังสมบัติตัวอย่าง?</h3>
+            <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                รายการที่เจ้าหญิงบันทึกไว้จะถูกล้างและแทนที่ด้วยข้อมูลจำลองเริ่มต้นเพื่อการทดสอบระบบค่ะ
+            </p>
+            <div class="flex gap-2 mt-5">
+                <button onclick="closeResetModal()" class="flex-1 py-2.5 rounded-2xl text-sm font-medium bg-pink-50 hover:bg-pink-100 text-pink-700 transition">ยกเลิก</button>
+                <button onclick="confirmResetDemo()" class="flex-1 py-2.5 rounded-2xl text-sm font-semibold bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow-md shadow-pink-200 transition">ยืนยันรีเซ็ต ✨</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // ==========================================
+        // 1. STATE & CONSTANTS
+        // ==========================================
+        const STORAGE_KEY = 'uniwallet_princess_data_v1';
+
+        const CATEGORY_META = {
+            food: { label: 'ค่าอาหาร & ขนมหวาน', icon: '🍰', color: '#fb7185', bg: 'bg-rose-100 text-rose-700', needType: 'need' },
+            transport: { label: 'ค่าเดินทาง / วิน / รถเมล์', icon: '🦄', color: '#c084fc', bg: 'bg-purple-100 text-purple-700', needType: 'need' },
+            study: { label: 'ค่าเรียน / ชีท / เครื่องเขียน', icon: '📚', color: '#818cf8', bg: 'bg-indigo-100 text-indigo-700', needType: 'need' },
+            housing: { label: 'ค่าหอพัก / ค่าน้ำไฟ / เน็ต', icon: '🏰', color: '#fbbf24', bg: 'bg-amber-100 text-amber-800', needType: 'need' },
+            lifestyle: { label: 'ช้อปปิ้ง / สังสรรค์ / บิวตี้', icon: '🎀', color: '#f472b6', bg: 'bg-pink-100 text-pink-700', needType: 'want' },
+            other: { label: 'รายรับ / ออมเพชร / อื่นๆ', icon: '💎', color: '#34d399', bg: 'bg-emerald-100 text-emerald-700', needType: 'saving' }
+        };
+
+        let appState = {
+            baseIncome: 9000,      // งบเบี้ยเลี้ยงตั้งต้นต่อเดือน
+            savingsGoal: 1500,     // เป้าหมายออมเพชรประจำเดือน
+            transactions: []
+        };
+
+        let currentFilter = 'all';
+        let simulatorChartInstance = null;
+        let categoryChartInstance = null;
+
+        // ==========================================
+        // 2. INITIALIZATION & DEMO DATA GENERATOR
+        // ==========================================
+        function getTodayISO() {
+            const now = new Date();
+            const offset = now.getTimezoneOffset();
+            const localDate = new Date(now.getTime() - (offset * 60 * 1000));
+            return localDate.toISOString().split('T')[0];
+        }
+
+        function getDateOffsetISO(daysAgo) {
+            const now = new Date();
+            now.setDate(now.getDate() - daysAgo);
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const targetDate = now < firstDayOfMonth ? firstDayOfMonth : now;
+            const offset = targetDate.getTimezoneOffset();
+            const localDate = new Date(targetDate.getTime() - (offset * 60 * 1000));
+            return localDate.toISOString().split('T')[0];
+        }
+
+        function generateDemoData() {
+            const today = new Date();
+            const currentDay = today.getDate();
+            
+            const demoTx = [
+                { id: 'tx-1', type: 'fixed', category: 'housing', amount: 3200, note: 'ค่าเช่าหอพักปราสาท + Wi-Fi', date: getDateOffsetISO(Math.min(currentDay - 1, 12)) },
+                { id: 'tx-2', type: 'fixed', category: 'housing', amount: 199, note: 'แพ็กเกจเน็ตมือถือรายเดือน', date: getDateOffsetISO(Math.min(currentDay - 1, 10)) },
+                { id: 'tx-3', type: 'variable', category: 'study', amount: 180, note: 'ซื้อชีทสรุปวิชาเอก + ปากกาไฮไลต์พาสเทล', date: getDateOffsetISO(Math.min(currentDay - 1, 8)) },
+                { id: 'tx-4', type: 'variable', category: 'food', amount: 120, note: 'ข้าวกลางวัน + สตรอว์เบอร์รีสมูทตี้', date: getDateOffsetISO(Math.min(currentDay - 1, 6)) },
+                { id: 'tx-5', type: 'variable', category: 'lifestyle', amount: 350, note: 'ปาร์ตี้ชาบูกับแก๊งเพื่อนสาวหลังสอบ', date: getDateOffsetISO(Math.min(currentDay - 1, 5)) },
+                { id: 'tx-6', type: 'income', category: 'other', amount: 800, note: 'ค่าจ้างช่วยงานอาจารย์ / ติวรุ่นน้อง', date: getDateOffsetISO(Math.min(currentDay - 1, 4)) },
+                { id: 'tx-7', type: 'variable', category: 'transport', amount: 60, note: 'ค่าวินมอเตอร์ไซค์ไป-กลับคณะ', date: getDateOffsetISO(Math.min(currentDay - 1, 3)) },
+                { id: 'tx-8', type: 'variable', category: 'lifestyle', amount: 290, note: 'ช้อปปิ้งลิปกลอส & กิ๊บติดผม', date: getDateOffsetISO(Math.min(currentDay - 1, 2)) },
+                { id: 'tx-9', type: 'variable', category: 'food', amount: 85, note: 'ข้าวเย็น + ชานมไข่มุกบราวน์ชูการ์', date: getDateOffsetISO(Math.min(currentDay - 1, 1)) },
+                { id: 'tx-10', type: 'variable', category: 'food', amount: 50, note: 'ข้าวเช้าโรงอาหารคณะ', date: getTodayISO() }
+            ];
+
+            return {
+                baseIncome: 9000,
+                savingsGoal: 1500,
+                transactions: demoTx
+            };
+        }
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    appState = JSON.parse(saved);
+                } else {
+                    appState = generateDemoData();
+                    saveState();
+                }
+            } catch (e) {
+                console.error('Error loading state:', e);
+                appState = generateDemoData();
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (e) {
+                console.error('Error saving state:', e);
+            }
+        }
+
+        // ==========================================
+        // 3. CORE FINANCIAL CALCULATIONS
+        // ==========================================
+        function calculateMetrics() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const todayNum = now.getDate();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysRemaining = Math.max(1, daysInMonth - todayNum + 1);
+            const todayISO = getTodayISO();
+
+            let extraIncome = 0;
+            let fixedExpenses = 0;
+            let variableExpensesBeforeToday = 0;
+            let variableExpensesToday = 0;
+
+            let categoryTotals = { food: 0, transport: 0, study: 0, housing: 0, lifestyle: 0, other: 0 };
+            let needsTotal = 0;
+            let wantsTotal = 0;
+
+            appState.transactions.forEach(tx => {
+                const amt = Number(tx.amount) || 0;
+                if (tx.type === 'income') {
+                    extraIncome += amt;
+                } else {
+                    if (categoryTotals[tx.category] !== undefined) {
+                        categoryTotals[tx.category] += amt;
+                    }
+                    const meta = CATEGORY_META[tx.category];
+                    if (meta && meta.needType === 'want') {
+                        wantsTotal += amt;
+                    } else {
+                        needsTotal += amt;
+                    }
+
+                    if (tx.type === 'fixed') {
+                        fixedExpenses += amt;
+                    } else {
+                        if (tx.date === todayISO) {
+                            variableExpensesToday += amt;
+                        } else {
+                            variableExpensesBeforeToday += amt;
+                        }
+                    }
+                }
+            });
+
+            const totalIncome = appState.baseIncome + extraIncome;
+            const totalExpenses = fixedExpenses + variableExpensesBeforeToday + variableExpensesToday;
+            const netBalance = totalIncome - totalExpenses;
+
+            const availablePoolStartOfToday = totalIncome - fixedExpenses - appState.savingsGoal - variableExpensesBeforeToday;
+            const dailyAllowanceStartOfToday = Math.max(0, availablePoolStartOfToday / daysRemaining);
+            const remainingForToday = Math.max(0, dailyAllowanceStartOfToday - variableExpensesToday);
+
+            const elapsedDaysBeforeToday = Math.max(1, todayNum - 1);
+            const initialVariablePool = Math.max(0, totalIncome - fixedExpenses - appState.savingsGoal);
+            const idealDailyBudget = initialVariablePool / daysInMonth;
+            const expectedSpentBeforeToday = idealDailyBudget * elapsedDaysBeforeToday;
+            const rewardPot = Math.max(0, Math.round(expectedSpentBeforeToday - variableExpensesBeforeToday));
+
+            const avgDailyVariableSpend = (variableExpensesBeforeToday + variableExpensesToday) / todayNum;
+
+            let healthScore = 70;
+            if (totalIncome > 0) {
+                const savingsRate = ((totalIncome - totalExpenses) / totalIncome) * 100;
+                const wantsRate = (wantsTotal / totalIncome) * 100;
+                healthScore = Math.round(
+                    Math.min(100, Math.max(15, 50 + (savingsRate * 1.1) - (Math.max(0, wantsRate - 25) * 0.8)))
+                );
+            }
+
+            return {
+                todayNum,
+                daysInMonth,
+                daysRemaining,
+                totalIncome,
+                fixedExpenses,
+                variableExpensesBeforeToday,
+                variableExpensesToday,
+                totalExpenses,
+                netBalance,
+                dailyAllowanceStartOfToday,
+                remainingForToday,
+                rewardPot,
+                avgDailyVariableSpend,
+                categoryTotals,
+                needsTotal,
+                wantsTotal,
+                healthScore
+            };
+        }
+
+        // ==========================================
+        // 4. UI RENDERING FUNCTIONS
+        // ==========================================
+        function formatBaht(num) {
+            return '฿' + Math.round(num).toLocaleString('th-TH');
+        }
+
+        function updateAllUI() {
+            const m = calculateMetrics();
+
+            // Header Date
+            const now = new Date();
+            const thaiMonths = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            document.getElementById('header-date-display').textContent = `${now.getDate()} ${thaiMonths[now.getMonth()]} ${now.getFullYear() + 543}`;
+
+            // Hero Card: Dynamic Daily Allowance
+            document.getElementById('days-left-badge').textContent = `เหลือ ${m.daysRemaining} วันในเดือนนี้`;
+            document.getElementById('daily-allowance-amount').textContent = formatBaht(m.remainingForToday);
+            document.getElementById('today-spent-text').textContent = formatBaht(m.variableExpensesToday);
+
+            const todayPct = m.dailyAllowanceStartOfToday > 0 
+                ? Math.min(100, Math.round((m.variableExpensesToday / m.dailyAllowanceStartOfToday) * 100)) 
+                : 100;
+            const progressBar = document.getElementById('today-progress-bar');
+            const statusText = document.getElementById('today-status-text');
+            progressBar.style.width = `${todayPct}%`;
+
+            if (m.variableExpensesToday > m.dailyAllowanceStartOfToday) {
+                progressBar.className = 'bg-rose-200 h-1.5 rounded-full transition-all duration-500';
+                statusText.className = 'text-rose-100 font-semibold';
+                statusText.textContent = `เกินงบวันนี้ไป ${formatBaht(m.variableExpensesToday - m.dailyAllowanceStartOfToday)} 🥺`;
+            } else if (todayPct > 80) {
+                progressBar.className = 'bg-amber-200 h-1.5 rounded-full transition-all duration-500';
+                statusText.className = 'text-amber-100 font-medium';
+                statusText.textContent = `ใกล้เต็มงบวันนี้แล้วนะ (${todayPct}%) ✨`;
+            } else {
+                progressBar.className = 'bg-amber-300 h-1.5 rounded-full transition-all duration-500';
+                statusText.className = 'text-amber-200 font-semibold';
+                statusText.textContent = `ยังอยู่ในงบเจ้าหญิง (${todayPct}%) 💖`;
+            }
+
+            // Reward Pot
+            document.getElementById('reward-pot-amount').textContent = formatBaht(m.rewardPot);
+
+            // 4 Stat Cards
+            document.getElementById('stat-net-balance').textContent = formatBaht(m.netBalance);
+            document.getElementById('stat-total-income').textContent = formatBaht(m.totalIncome);
+            document.getElementById('stat-total-expense').textContent = formatBaht(m.totalExpenses);
+            document.getElementById('stat-expense-breakdown').textContent = `คงที่ ${formatBaht(m.fixedExpenses)} | ทั่วไป ${formatBaht(m.variableExpensesBeforeToday + m.variableExpensesToday)}`;
+            document.getElementById('stat-savings-goal').textContent = formatBaht(appState.savingsGoal);
+
+            // Financial Health Score & Royal Finance Fairy
+            document.getElementById('health-score-value').textContent = m.healthScore;
+            const ring = document.getElementById('health-score-ring');
+            ring.setAttribute('stroke-dasharray', `${m.healthScore}, 100`);
+
+            let levelText = 'เจ้าหญิงนักออมผู้ชาญฉลาด 👑';
+            let badgeClass = 'bg-pink-100 text-pink-700 border-pink-200';
+            let ringClass = 'text-pink-500';
+            let advice = '';
+
+            if (m.healthScore >= 80) {
+                levelText = 'ราชินีแห่งการบริหารคลังสมบัติ 👑✨';
+                badgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
+                ringClass = 'text-amber-400';
+                advice = `เก่งที่สุดเลยเพคะเจ้าหญิง! วันนี้ยังเหลือเบี้ยเลี้ยงอีก ${formatBaht(m.remainingForToday)} แถมมีเพชรในหีบโบนัสสะสมตั้ง ${formatBaht(m.rewardPot)} รักษาวินัยแสนน่ารักนี้ไว้จนถึงสิ้นเดือนนะคะ 💖`;
+            } else if (m.healthScore >= 55) {
+                levelText = 'เจ้าหญิงนักออมผู้ชาญฉลาด 🎀';
+                badgeClass = 'bg-pink-100 text-pink-700 border-pink-200';
+                ringClass = 'text-pink-500';
+                advice = `คลังสมบัติของเจ้าหญิงยังปลอดภัยดีค่ะ แต่แอบเห็นรายจ่ายช้อปปิ้งและของน่ารักๆ (${formatBaht(m.wantsTotal)}) เริ่มขยับขึ้น ลองเบามือลงนิดนึงเพื่อเป้าหมายออมเพชร ${formatBaht(appState.savingsGoal)} นะคะ ✨`;
+            } else {
+                levelText = 'เจ้าหญิงสายเปย์ฝึกหัด 🛍️💫';
+                badgeClass = 'bg-purple-100 text-purple-700 border-purple-200';
+                ringClass = 'text-purple-500';
+                advice = `อุ๊ย! ช่วงนี้เจ้าหญิงช้อปเพลินไปหน่อยนะคะ เบี้ยเลี้ยงรายวันเริ่มเหลือน้อยแล้ว ลองแวะไปเล่น "ห้องจำลองเวทมนตร์" ด้านล่างเพื่อวางแผนกอบกู้คลังสมบัติกันค่ะ 🪄`;
+            }
+
+            ring.className = `${ringClass} transition-all duration-700`;
+            const badgeDesktop = document.getElementById('health-level-badge');
+            const badgeMobile = document.getElementById('health-level-badge-mobile');
+            badgeDesktop.textContent = levelText;
+            badgeDesktop.className = `px-3 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}`;
+            badgeMobile.textContent = levelText;
+            badgeMobile.className = `inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}`;
+            document.getElementById('ai-buddy-message').textContent = advice;
+
+            // Update 50/30/20 Bars
+            const baseForRatio = Math.max(1, m.totalIncome);
+            const needsPct = Math.min(100, Math.round((m.needsTotal / baseForRatio) * 100));
+            const wantsPct = Math.min(100, Math.round((m.wantsTotal / baseForRatio) * 100));
+            const actualSavings = Math.max(0, m.netBalance);
+            const savingsPct = Math.min(100, Math.round((actualSavings / baseForRatio) * 100));
+
+            document.getElementById('ratio-needs-text').textContent = `${needsPct}% (${formatBaht(m.needsTotal)})`;
+            document.getElementById('ratio-needs-bar').style.width = `${needsPct}%`;
+
+            document.getElementById('ratio-wants-text').textContent = `${wantsPct}% (${formatBaht(m.wantsTotal)})`;
+            document.getElementById('ratio-wants-bar').style.width = `${wantsPct}%`;
+
+            document.getElementById('ratio-savings-text').textContent = `${savingsPct}% (${formatBaht(actualSavings)})`;
+            document.getElementById('ratio-savings-bar').style.width = `${savingsPct}%`;
+
+            // Render Sub-components
+            renderTransactionList();
+            renderCategoryChart(m.categoryTotals);
+            updateSimulator();
+        }
+
+        // ==========================================
+        // 5. TRANSACTION LIST & ACTIONS
+        // ==========================================
+        function renderTransactionList() {
+            const container = document.getElementById('transaction-list');
+            let filtered = [...appState.transactions];
+
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(tx => tx.type === currentFilter);
+            }
+
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="py-12 text-center text-pink-400">
+                        <div class="text-3xl mb-2">🏰</div>
+                        <p class="text-sm font-medium">ยังไม่มีรายการบันทึกในหมวดนี้เพคะเจ้าหญิง</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(tx => {
+                const meta = CATEGORY_META[tx.category] || CATEGORY_META.other;
+                const isIncome = tx.type === 'income';
+                const sign = isIncome ? '+' : '-';
+                const amountColor = isIncome ? 'text-emerald-600' : 'text-pink-700';
+                const typeBadge = tx.type === 'fixed' 
+                    ? '<span class="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-semibold">คงที่</span>' 
+                    : (isIncome ? '<span class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">รายรับ ✨</span>' : '');
+
+                return `
+                    <div class="py-3 flex items-center justify-between gap-3 hover:bg-pink-50/70 px-2.5 rounded-2xl transition group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 rounded-2xl ${meta.bg} flex items-center justify-center text-lg shrink-0 shadow-sm">
+                                ${meta.icon}
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5">
+                                    <p class="text-sm font-semibold text-slate-800 truncate">${escapeHTML(tx.note)}</p>
+                                    ${typeBadge}
+                                </div>
+                                <p class="text-xs text-slate-400">${meta.label} • ${formatThaiDate(tx.date)}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 shrink-0">
+                            <span class="font-cute text-sm sm:text-base font-bold ${amountColor}">${sign}${formatBaht(tx.amount)}</span>
+                            <button onclick="deleteTransaction('${tx.id}')" title="ลบรายการ" class="text-pink-300 hover:text-rose-500 p-1.5 rounded-xl hover:bg-rose-50 transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function setTxFilter(filterType) {
+            currentFilter = filterType;
+            ['all', 'variable', 'fixed', 'income'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                if (f === filterType) {
+                    btn.className = 'px-3 py-1 rounded-xl text-xs font-semibold bg-white text-pink-700 shadow-sm transition';
+                } else {
+                    btn.className = 'px-3 py-1 rounded-xl text-xs font-medium text-slate-600 hover:text-pink-700 transition';
+                }
+            });
+            renderTransactionList();
+        }
+
+        function quickAddExpense(note, amount, category, type) {
+            const newTx = {
+                id: 'tx-' + Date.now(),
+                type,
+                category,
+                amount,
+                note,
+                date: getTodayISO()
+            };
+            appState.transactions.unshift(newTx);
+            saveState();
+            updateAllUI();
+            showToast(`บันทึก "${note}" (${formatBaht(amount)}) เข้าคลังแล้วเพคะ! ✨`, 'success');
+        }
+
+        function handleAddTransaction(e) {
+            e.preventDefault();
+            const type = document.getElementById('tx-type').value;
+            const category = document.getElementById('tx-category').value;
+            const amount = parseFloat(document.getElementById('tx-amount').value);
+            const note = document.getElementById('tx-note').value.trim();
+            const date = document.getElementById('tx-date').value;
+
+            if (!amount || amount <= 0 || !note) return;
+
+            const newTx = {
+                id: 'tx-' + Date.now(),
+                type,
+                category,
+                amount,
+                note,
+                date
+            };
+
+            appState.transactions.unshift(newTx);
+            saveState();
+            updateAllUI();
+
+            document.getElementById('tx-amount').value = '';
+            document.getElementById('tx-note').value = '';
+            showToast(`บันทึกรายการ "${note}" เรียบร้อยแล้วค่ะ 💖`, 'success');
+        }
+
+        function deleteTransaction(id) {
+            appState.transactions = appState.transactions.filter(tx => tx.id !== id);
+            saveState();
+            updateAllUI();
+            showToast('ลบรายการออกจากบันทึกแล้วค่ะ 🪄', 'info');
+        }
+
+        function updateCategoryOptions() {
+            const type = document.getElementById('tx-type').value;
+            const catSelect = document.getElementById('tx-category');
+            if (type === 'income') {
+                catSelect.value = 'other';
+            } else if (type === 'fixed') {
+                catSelect.value = 'housing';
+            } else {
+                catSelect.value = 'food';
+            }
+        }
+
+        // ==========================================
+        // 6. END-OF-MONTH MAGIC SIMULATOR & CHARTS
+        // ==========================================
+        function updateSimulator() {
+            const m = calculateMetrics();
+            
+            const reduceWantsWeekly = parseInt(document.getElementById('sim-reduce-wants').value) || 0;
+            const reduceFoodWeekly = parseInt(document.getElementById('sim-reduce-food').value) || 0;
+            const extraIncomeMonthly = parseInt(document.getElementById('sim-extra-income').value) || 0;
+
+            document.getElementById('sim-reduce-wants-val').textContent = `-${formatBaht(reduceWantsWeekly)} / สัปดาห์`;
+            document.getElementById('sim-reduce-food-val').textContent = `-${formatBaht(reduceFoodWeekly)} / สัปดาห์`;
+            document.getElementById('sim-extra-income-val').textContent = `+${formatBaht(extraIncomeMonthly)} / เดือน`;
+
+            const dailySavingsFromSim = (reduceWantsWeekly + reduceFoodWeekly) / 7;
+            const simulatedDailySpend = Math.max(0, m.avgDailyVariableSpend - dailySavingsFromSim);
+
+            const labels = [];
+            const currentPathData = [];
+            const simulatedPathData = [];
+
+            const startBalanceAfterFixed = m.totalIncome - m.fixedExpenses;
+            const actualDailyBurn = m.todayNum > 0 ? (m.variableExpensesBeforeToday + m.variableExpensesToday) / m.todayNum : 0;
+
+            let brokeDayCurrent = null;
+
+            for (let day = 1; day <= m.daysInMonth; day++) {
+                labels.push(`วันที่ ${day}`);
+
+                if (day <= m.todayNum) {
+                    const bal = startBalanceAfterFixed - (actualDailyBurn * day);
+                    currentPathData.push(Math.round(bal));
+                    simulatedPathData.push(Math.round(bal + (day === m.todayNum ? extraIncomeMonthly : 0)));
+                    if (bal <= 0 && brokeDayCurrent === null) brokeDayCurrent = day;
+                } else {
+                    const daysAhead = day - m.todayNum;
+                    const projCurrent = m.netBalance - (m.avgDailyVariableSpend * daysAhead);
+                    const projSim = (m.netBalance + extraIncomeMonthly) - (simulatedDailySpend * daysAhead);
+
+                    currentPathData.push(Math.round(projCurrent));
+                    simulatedPathData.push(Math.round(projSim));
+
+                    if (projCurrent <= 0 && brokeDayCurrent === null) {
+                        brokeDayCurrent = day;
+                    }
+                }
+            }
+
+            const endBalanceCurrent = currentPathData[currentPathData.length - 1];
+            const endBalanceSim = simulatedPathData[simulatedPathData.length - 1];
+            const gainAmount = Math.max(0, endBalanceSim - endBalanceCurrent);
+
+            document.getElementById('sim-gain-amount').textContent = `+${formatBaht(gainAmount)} ✨`;
+
+            const predBox = document.getElementById('sim-prediction-box');
+            const predText = document.getElementById('sim-prediction-text');
+
+            if (brokeDayCurrent !== null) {
+                predBox.className = 'bg-rose-50 border-2 border-rose-200 rounded-2xl px-4 py-3 text-right shrink-0';
+                predText.className = 'text-sm sm:text-base font-bold text-rose-600 mt-0.5';
+                predText.textContent = `🥺 คลังสมบัติจะหมดในวันที่ ${brokeDayCurrent} ของเดือน!`;
+            } else {
+                predBox.className = 'bg-pink-50 border-2 border-pink-200 rounded-2xl px-4 py-3 text-right shrink-0';
+                predText.className = 'text-sm sm:text-base font-bold text-pink-700 mt-0.5';
+                predText.textContent = `👑 พอใช้ถึงสิ้นเดือน (เหลือ ${formatBaht(endBalanceCurrent)})`;
+            }
+
+            renderSimulatorChart(labels, currentPathData, simulatedPathData);
+        }
+
+        function resetSimulatorSliders() {
+            document.getElementById('sim-reduce-wants').value = 0;
+            document.getElementById('sim-reduce-food').value = 0;
+            document.getElementById('sim-extra-income').value = 0;
+            updateSimulator();
+        }
+
+        function renderSimulatorChart(labels, currentData, simData) {
+            const ctx = document.getElementById('simulatorChart').getContext('2d');
+            
+            if (simulatorChartInstance) {
+                simulatorChartInstance.data.labels = labels;
+                simulatorChartInstance.data.datasets[0].data = currentData;
+                simulatorChartInstance.data.datasets[1].data = simData;
+                simulatorChartInstance.update();
+                return;
+            }
+
+            simulatorChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'เส้นทางคลังสมบัติปัจจุบัน',
+                            data: currentData,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.35,
+                            pointRadius: 0,
+                            pointHoverRadius: 5
+                        },
+                        {
+                            label: 'หลังร่ายเวทมนตร์ปรับพฤติกรรม (What-If) ✨',
+                            data: simData,
+                            borderColor: '#ec4899',
+                            backgroundColor: 'rgba(236, 72, 153, 0.14)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 0,
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: { font: { family: 'Prompt', size: 12 }, usePointStyle: true }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#be185d',
+                            bodyColor: '#334155',
+                            borderColor: '#fbcfe8',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ฿${context.parsed.y.toLocaleString('th-TH')}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 8, font: { family: 'Prompt', size: 11 }, color: '#9d174d' }
+                        },
+                        y: {
+                            grid: { color: '#fdf2f8' },
+                            ticks: {
+                                font: { family: 'Prompt', size: 11 },
+                                color: '#64748b',
+                                callback: value => '฿' + value.toLocaleString('th-TH')
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderCategoryChart(categoryTotals) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            const keys = ['food', 'housing', 'lifestyle', 'transport', 'study'];
+            const labels = keys.map(k => CATEGORY_META[k].label);
+            const data = keys.map(k => categoryTotals[k] || 0);
+            const colors = keys.map(k => CATEGORY_META[k].color);
+
+            if (categoryChartInstance) {
+                categoryChartInstance.data.datasets[0].data = data;
+                categoryChartInstance.update();
+                return;
+            }
+
+            categoryChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 3,
+                        borderColor: '#ffffff',
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '64%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: { family: 'Prompt', size: 11 },
+                                boxWidth: 12,
+                                padding: 12,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#be185d',
+                            bodyColor: '#334155',
+                            borderColor: '#fbcfe8',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(ctx) {
+                                    const val = ctx.parsed || 0;
+                                    const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = sum > 0 ? Math.round((val / sum) * 100) : 0;
+                                    return ` ฿${val.toLocaleString('th-TH')} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // 7. MODALS & UTILITIES
+        // ==========================================
+        function openSettingsModal() {
+            document.getElementById('setting-base-income').value = appState.baseIncome;
+            document.getElementById('setting-savings-goal').value = appState.savingsGoal;
+            const modal = document.getElementById('settings-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveSettings(e) {
+            e.preventDefault();
+            const baseIncome = parseFloat(document.getElementById('setting-base-income').value) || 0;
+            const savingsGoal = parseFloat(document.getElementById('setting-savings-goal').value) || 0;
+            
+            appState.baseIncome = baseIncome;
+            appState.savingsGoal = savingsGoal;
+            saveState();
+            updateAllUI();
+            closeSettingsModal();
+            showToast('อัปเดตคลังสมบัติประจำเดือนเรียบร้อยแล้วเพคะ 👑', 'success');
+        }
+
+        function openResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeResetModal() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmResetDemo() {
+            appState = generateDemoData();
+            saveState();
+            resetSimulatorSliders();
+            updateAllUI();
+            closeResetModal();
+            showToast('รีเซ็ตข้อมูลคลังสมบัติตัวอย่างเรียบร้อยแล้วค่ะ ✨', 'info');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' 
+                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white border border-pink-200' 
+                : 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white border border-purple-200';
+            const icon = type === 'success' ? '👑' : '🪄';
+
+            toast.className = `${bgClass} px-4 py-3 rounded-2xl shadow-lg shadow-pink-200/60 flex items-center gap-2.5 text-xs sm:text-sm font-medium transform transition-all duration-300 translate-y-0 opacity-100 pointer-events-auto`;
+            toast.innerHTML = `<span class="text-base">${icon}</span><span>${escapeHTML(message)}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 2800);
+        }
+
+        function formatThaiDate(isoStr) {
+            if (!isoStr) return '';
+            const parts = isoStr.split('-');
+            if (parts.length !== 3) return isoStr;
+            const months = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+            return `${parseInt(parts[2])} ${months[parseInt(parts[1]) - 1]}`;
+        }
+
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
+
+        // ==========================================
+        // 8. BOOTSTRAP APPLICATION
+        // ==========================================
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('tx-date').value = getTodayISO();
+            loadState();
+            updateAllUI();
+        });
+    </script>
+</body>
+</html>
